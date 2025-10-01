@@ -62,9 +62,7 @@ def least_squares(y, tx):
 
     return w,L
 
-print('fwe')
-least_squares(np.array([1,1]),np.array([[2,1],[1,7]]))
-    
+
 def ridge_regression(y, tx, lambda_):
 
     N = np.shape(y)[0]
