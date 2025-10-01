@@ -27,15 +27,37 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
         return losses, ws
 
 def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
+    return
     
     
 def least_squares(y, tx):
-  
+    N = np.shape(y)[0]
+    D = np.shape(tx)[1]
+    w = np.zeros(D)
+
+    XTX = np.transpose(tx)@tx
+    XTX_inv = np.linalg.inv(XTX)
+    w = (XTX_inv@np.transpose(tx))@y
+    L = (np.transpose(y-tx@w)@(y-tx@w))/(2*N)
+
+    return w,L
+
+print('fwe')
+least_squares(np.array([1,1]),np.array([[2,1],[1,7]]))
     
 def ridge_regression(y, tx, lambda_):
+
+    N = np.shape(y)[0]
+    D = np.shape(tx)[1]
+    w = np.zeros(D)
+    lambda_prime = lambda_*2*N
+
+    XTX = np.transpose(tx)@tx    
+    w = np.linalg.inv(XTX + lambda_prime*np.identity(D))@np.transpose(tx)@y
     
+    return w
      
-def logistic_regression(y, tx, initial_w, max_iters, gamma):
+# def logistic_regression(y, tx, initial_w, max_iters, gamma):
     
     
-def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+# def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
