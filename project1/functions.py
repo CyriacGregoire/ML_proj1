@@ -28,7 +28,7 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
         ws.append(w)
         losses.append(loss)
         
-    return losses, ws
+    return ws[-1], loss[-1]
 
 def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
     ws = [initial_w]
@@ -48,7 +48,7 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
         ws.append(w)
         losses.append(loss)
         
-    return losses, ws
+    return ws[-1], loss[-1]
         
 def least_squares(y, tx):
   
