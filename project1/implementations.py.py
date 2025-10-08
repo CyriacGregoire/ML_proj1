@@ -5,7 +5,7 @@ def mse_loss(y, tx, w):
     error = y - tx @ w
     return np.mean(error ** 2) / 2
 
-def compute_gradient(y, tx, w):
+def compute_gradient_mse(y, tx, w):
     N = y.shape[0]
     error = y - tx @ w
     return -(tx.T @ error) / N
@@ -51,29 +51,24 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
     return ws[-1], loss[-1]
         
 def least_squares(y, tx):
-    N = np.shape(y)[0]
-    D = np.shape(tx)[1]
-    w = np.zeros(D)
-
-    XTX = np.transpose(tx)@tx
-    XTX_inv = np.linalg.inv(XTX)
-    w = (XTX_inv@np.transpose(tx))@y
-    L = (np.transpose(y-tx@w)@(y-tx@w))/(2*N)
-
-    return w,L
+    A = tx.T @ tx
+    b = tx.T @ y
+    w = np.linalg.solve(A, b)
+    mse = mse_loss(y, tx, w)
+    return w, mse
 
 
 def ridge_regression(y, tx, lambda_):
+    D = tx.shape[1]
+    N = y.shape[0]
+    I = np.eye(D)
+    lambda_prime = lambda_ * 2 * N
+    A = tx.T @ tx + lambda_prime * I
+    b = tx.T @ y
+    w = np.linalg.solve(A, b)
+    rmse = np.sqrt(2 * mse_loss(y, tx, w))
+    return w, rmse
 
-    N = np.shape(y)[0]
-    D = np.shape(tx)[1]
-    w = np.zeros(D)
-    lambda_prime = lambda_*2*N
-
-    XTX = np.transpose(tx)@tx    
-    w = np.linalg.inv(XTX + lambda_prime*np.identity(D))@np.transpose(tx)@y
-    
-    return w
      
 # def logistic_regression(y, tx, initial_w, max_iters, gamma):
     
