@@ -13,12 +13,13 @@ def sigmoid(t):
                     1 / (1 + np.exp(-t)),
                     np.exp(t) / (1 + np.exp(t)))
 
-def logistic_loss(y, t):
+def logistic_loss(y, tx, w):
     """Stable logistic loss computation."""
-    pred = sigmoid(t)
     eps = 1e-15
+    pred = sigmoid(tx @ w)
     pred = np.clip(pred, eps, 1 - eps)
-    return -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
+    loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
+    return float(loss)
 
 #Compute Gradients
 
@@ -117,26 +118,28 @@ def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
     w = w - gamma * grad
     return loss, w
     
-def logistic_regression_penalized_gradient_descent_demo(y, x, max_iter = 10000, gamma = 0.5, lambda_ = 0.0005, threshold = 1e-8):
-    # init parameters
-
+def logistic_regression_penalized_gradient_descent_demo(
+    y, x, max_iter=10000, gamma=0.5, lambda_=0.0005, threshold=1e-8
+):
     losses = []
 
     # build tx
     tx = np.c_[np.ones((y.shape[0], 1)), x]
-    w = np.zeros((tx.shape[1], 1))
+    w = np.zeros(tx.shape[1])
 
-    # start the logistic regression
     for iter in range(max_iter):
-        # get loss and update w.
         loss, w = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
-        # log info
-        if iter % 100 == 0:
-            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
-        # converge criterion
         losses.append(loss)
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
-            return loss, w
+
+        if iter % 100 == 0:
+            print(f"Iteration {iter:5d}, loss = {loss:.6f}")
+
+        # convergence check
+        if len(losses) > 1 and abs(losses[-1] - losses[-2]) < threshold:
+            print(f"Converged at iteration {iter}")
+            break
+
+    return loss, w
             
 
 #Explicit Solutions

@@ -7,7 +7,7 @@ def remove_nan_features(X, threshold=0.3):
     nan_per_feature = np.sum(np.isnan(X), axis=0)
     keep_mask = nan_per_feature < threshold * X.shape[0]
     X_clean = X[:, keep_mask]
-    return X_clean
+    return X_clean, keep_mask
 
 
 def remove_nan_rows(X, y=None):
