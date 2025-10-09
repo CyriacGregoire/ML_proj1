@@ -8,12 +8,17 @@ def mse_loss(y, tx, w):
     return np.mean(error ** 2) / 2
 
 def sigmoid(t):
-    return 1 / (np.exp(-t)+1)
+    """Numerically stable sigmoid."""
+    return np.where(t >= 0,
+                    1 / (1 + np.exp(-t)),
+                    np.exp(t) / (1 + np.exp(t)))
 
-def logistic_loss(y, tx, w):
-    pred = sigmoid(tx @ w)                    
-    loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
-    return float(loss)
+def logistic_loss(y, t):
+    """Stable logistic loss computation."""
+    pred = sigmoid(t)
+    eps = 1e-15
+    pred = np.clip(pred, eps, 1 - eps)
+    return -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
 
 #Compute Gradients
 
@@ -112,12 +117,9 @@ def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
     w = w - gamma * grad
     return loss, w
     
-def logistic_regression_penalized_gradient_descent_demo(y, x):
+def logistic_regression_penalized_gradient_descent_demo(y, x, max_iter = 10000, gamma = 0.5, lambda_ = 0.0005, threshold = 1e-8):
     # init parameters
-    max_iter = 10000
-    gamma = 0.5
-    lambda_ = 0.0005
-    threshold = 1e-8
+
     losses = []
 
     # build tx
