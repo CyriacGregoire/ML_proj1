@@ -110,6 +110,7 @@ def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
 
     loss, grad = penalized_logistic_regression(y, tx, w, lambda_)
     w = w - gamma * grad
+    return loss, w
     
 def logistic_regression_penalized_gradient_descent_demo(y, x):
     # init parameters
@@ -133,7 +134,8 @@ def logistic_regression_penalized_gradient_descent_demo(y, x):
         # converge criterion
         losses.append(loss)
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
-            break
+            return loss, w
+            
 
 #Explicit Solutions
         
