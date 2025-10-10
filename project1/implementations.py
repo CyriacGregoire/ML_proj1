@@ -7,11 +7,12 @@ def mse_loss(y, tx, w):
     error = y - tx @ w
     return np.mean(error ** 2) / 2
 
-def sigmoid(t):
-    """Numerically stable sigmoid."""
-    return np.where(t >= 0,
-                    1 / (1 + np.exp(-t)),
-                    np.exp(t) / (1 + np.exp(t)))
+def sigmoid(z):
+
+    # Clip z to avoid overflow in exp()
+    z = np.clip(z, -700, 700)  # exp(709) is close to float64 max (~1e308)
+
+    return 1.0 / (1.0 + np.exp(-z))
 
 def logistic_loss(y, tx, w):
     """Stable logistic loss computation."""

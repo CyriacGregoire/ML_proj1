@@ -93,5 +93,65 @@ def select_random_features(X, n):
     idx = np.random.choice(X.shape[1], n, replace=False)
     return X[:, idx]
 
+def balance_data(X, y, method="undersample", random_state=None):
+    """
+    Balances a binary dataset using only NumPy.
 
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, n_features)
+        Feature matrix.
+    y : np.ndarray, shape (n_samples,)
+        Binary target vector (0/1).
+    method : str, optional, default="undersample"
+        - "undersample": randomly drop majority samples
+        - "oversample": randomly duplicate minority samples
+    random_state : int or None
+        Seed for reproducibility.
+
+    Returns
+    -------
+    X_bal : np.ndarray
+        Balanced feature matrix.
+    y_bal : np.ndarray
+        Balanced target vector.
+    """
+    if random_state is not None:
+        np.random.seed(random_state)
+    
+    # Separate indices by class
+    idx_0 = np.where(y == 0)[0]
+    idx_1 = np.where(y == 1)[0]
+    
+    n_0, n_1 = len(idx_0), len(idx_1)
+
+    if method == "undersample":
+        # Downsample majority class
+        if n_0 > n_1:
+            idx_0_sampled = np.random.choice(idx_0, size=n_1, replace=False)
+            balanced_idx = np.concatenate([idx_0_sampled, idx_1])
+        else:
+            idx_1_sampled = np.random.choice(idx_1, size=n_0, replace=False)
+            balanced_idx = np.concatenate([idx_0, idx_1_sampled])
+    
+    elif method == "oversample":
+        # Upsample minority class
+        if n_0 > n_1:
+            idx_1_sampled = np.random.choice(idx_1, size=n_0, replace=True)
+            balanced_idx = np.concatenate([idx_0, idx_1_sampled])
+        else:
+            idx_0_sampled = np.random.choice(idx_0, size=n_1, replace=True)
+            balanced_idx = np.concatenate([idx_0_sampled, idx_1])
+    
+    else:
+        raise ValueError("method must be 'undersample' or 'oversample'")
+    
+    # Shuffle combined indices
+    np.random.shuffle(balanced_idx)
+    
+    # Return balanced data
+    X_bal = X[balanced_idx]
+    y_bal = y[balanced_idx]
+    
+    return X_bal, y_bal
 
