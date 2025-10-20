@@ -1,5 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from Data_cleaning import*
+from scipy.linalg import cho_factor, cho_solve
+from scipy.stats import norm
+from scipy.stats import chi2
 
 #Loss Functions
 
@@ -20,6 +24,7 @@ def logistic_loss(y, tx, w):
     pred = sigmoid(tx @ w)
     pred = np.clip(pred, eps, 1 - eps)
     loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
+    
     return float(loss)
 
 #Compute Gradients
@@ -107,20 +112,12 @@ def logistic_regression_gradient_descent(y, x):
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
           
-def penalized_logistic_regression(y, tx, w, lambda_):
-    loss = logistic_loss(y, tx, w)
-    grad = compute_gradient_logistic(y, tx, w)
-    grad += 2* lambda_ * w  
-    return loss, grad
 
-def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
+# Logistic Regression with Penalization
 
-    loss, grad = penalized_logistic_regression(y, tx, w, lambda_)
-    w = w - gamma * grad
-    return loss, w
-    
-def logistic_regression_penalized_gradient_descent_demo(
-    y, x, max_iter=10000, gamma=0.5, lambda_=0.0005, threshold=1e-8
+
+def logistic_regression_penalized_gradient_descent(
+    y, x, max_iter=10000, gamma=0.5, lambda_=1e-3, threshold=1e-8
 ):
     losses = []
 
@@ -129,10 +126,12 @@ def logistic_regression_penalized_gradient_descent_demo(
     w = np.zeros(tx.shape[1])
 
     for iter in range(max_iter):
-        loss, w = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
+        loss = logistic_loss(y, tx, w) + lambda_ * w.T@w
+        grad = compute_gradient_logistic(y, tx, w) + 2* lambda_ * w  
+        w = w - gamma * grad
         losses.append(loss)
 
-        if iter % 100 == 0:
+        if iter % 1000 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
 
         # convergence check
@@ -142,6 +141,103 @@ def logistic_regression_penalized_gradient_descent_demo(
 
     return loss, w
             
+def predict_logistic(X, w, limit=0.5):
+    """
+    Computes the model prediction for a trained w parameters
+    X should be normalized, without NaNs and without intercept column
+    limit is the threshold to decide between class 0 and 1
+
+    returns: a vector of 0/1 predictions
+    """
+
+    tx = np.hstack([np.ones((X.shape[0], 1)), X])
+    return (sigmoid(tx @ w) >= limit).astype(int)
+
+def kfold_logistic_ridge(
+        X, y, k=5, gamma=0.5, lambda_=1e-3, threshold=1e-8, random_state=None):
+    """
+    Performs K-Fold Cross Validation for logistic regression.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, n_features) with Nan values and unbalanced data
+    all the features will be used in this model (otherwise delete befor calling the function)
+    y : np.ndarray, shape (n_samples,) with binary labels (0/1)
+    k : int
+        Number of folds.
+    lam : float
+        Regularization strength.
+    lr : float
+        Learning rate.
+    epochs : int
+        Number of gradient descent epochs.
+    batch_size : int
+        Batch size for training.
+    random_state : int or None
+        For reproducible shuffling.
+
+    Returns
+    -------
+    mean_accuracy : float
+        Average validation accuracy across folds.
+    mean_dispersions_pred : float
+        Average predicted dispersion across folds.
+    mean_dispersions_true : float
+        Average true dispersion across folds.
+    w : np.ndarray, shape (n_features + 1,)
+        Model parameters from the last fold (arbitrary fold).
+    """
+    if random_state is not None:
+        np.random.seed(random_state)
+
+    n = len(y)
+    indices = np.random.permutation(n)  # Shuffle data
+    fold_sizes = np.full(k, n // k, dtype=int)
+    fold_sizes[:n % k] += 1
+
+    current = 0
+    scores = []
+    dispersions_pred = []
+    dispersions_true = []
+    current_batch = 1
+    w = []
+
+    for fold_size in fold_sizes:
+        print("Start cleaning batch", current_batch, "out of", k)
+        start, stop = current, current + fold_size
+        val_idx = indices[start:stop]
+        train_idx = np.concatenate([indices[:start], indices[stop:]])
+
+        X_train, X_val = X[train_idx], X[val_idx]
+        y_train, y_val = y[train_idx], y[val_idx]
+
+        # clean and balance data
+
+        X_train, X_val, y_train, y_val = clean_data(X_train, X_val, y_train, y_val)
+
+        print("Cleaning of batch", current_batch, "done. Stating the model training.")
+
+        # training the model and computing error
+
+        loss, w = logistic_regression_penalized_gradient_descent(y_train, X_train, lambda_=lambda_, gamma=gamma, threshold=threshold)
+        preds = predict_logistic(X_val, w)
+        acc = np.mean(preds == y_val)
+        dispersion_pred = np.sum(preds) / preds.shape[0]
+        dispersion_true = np.sum(y_val) / y_val.shape[0]
+        dispersions_pred.append((dispersion_pred))
+        dispersions_true.append((dispersion_true))
+
+        print("Dispersion in validation set:", dispersion_true)
+        print("Dispersion in predictions:", dispersion_pred)
+        scores.append(acc)
+
+        current = stop
+        print("Training done. Score for batch", current_batch, ":", acc)
+        print()
+        current_batch += 1
+
+    return w, np.mean(scores), np.mean(dispersions_pred), np.mean(dispersions_true)
+
 
 #Explicit Solutions
         
@@ -164,3 +260,117 @@ def ridge_regression(y, tx, lambda_):
     return w, rmse
 
 
+
+
+# Tvalues
+def logistic_tvalues(X, y, w, lambda_=1.0, eps=1e-12, batch_size=20000, return_cov=False):
+ 
+    print("entered")
+    """
+    Compute t-values (Wald z-scores), standard errors, and p-values for
+    each coefficient of a (possibly penalized) logistic regression.
+
+    Model: logit(p) = X @ w[1:] + w[0]    (where w[0] is the intercept)
+
+    Parameters
+    ----------
+    X : (n, p) array
+        Feature matrix (without intercept column)
+    y : (n,) array
+        Binary target vector (0/1)
+    w : (p+1,) array
+        Model parameters [intercept, coef_1, ..., coef_p]
+    lambda_ : float, optional
+        Ridge penalty strength (L2). Default 0 (unpenalized)
+    eps : float, optional
+        Small number for numerical stability
+    batch_size : int, optional
+        Number of samples processed per batch to limit memory use
+    return_cov : bool, optional
+        Whether to also return covariance matrix of parameters
+
+    Returns
+    -------
+    tvals : array of shape (p+1,)
+        Wald z-scores for each parameter (including intercept)
+    ses : array of shape (p+1,)
+        Standard errors
+    pvals : array of shape (p+1,)
+        Two-sided p-values from standard normal approximation
+    cov (optional) : (p+1, p+1) array
+        Covariance matrix of w
+    """
+    X = np.asarray(X, dtype=float)
+    y = np.asarray(y, dtype=float).ravel()
+    w = np.asarray(w, dtype=float).ravel()
+    n, p = X.shape
+    assert w.shape[0] == p + 1, "w must include intercept (length p+1)."
+
+    print(2)
+    # Add column of ones for intercept
+    X_design = np.empty((n, p + 1), dtype=float)
+    X_design[:, 0] = 1.0
+    X_design[:, 1:] = X
+
+    # Predicted probabilities
+    print(X_design.shape, w.shape  )
+    eta = X_design @ w
+    p_hat = sigmoid(eta)
+    W = p_hat * (1.0 - p_hat)
+    W = np.clip(W, eps, None)
+
+    # Compute Hessian (observed information matrix)
+    H = np.zeros((p + 1, p + 1), dtype=float)
+    for i in range(0, n, batch_size):
+        Xi = X_design[i:i + batch_size]
+        wi = W[i:i + batch_size][:, None]
+        H += Xi.T @ (Xi * wi)
+
+    # Add L2 penalty (except intercept)
+    if lambda_ > 0:
+        P = np.eye(p + 1) * lambda_
+        P[0, 0] = 0.0
+        H += P
+
+    # Numerical stabilizer
+    H += eps * np.eye(p + 1)
+
+    # Invert Hessian to get covariance
+    try:
+        c, lower = cho_factor(H, check_finite=False)
+        cov = cho_solve((c, lower), np.eye(p + 1), check_finite=False)
+    except Exception:
+        cov = np.linalg.pinv(H)
+
+    # Standard errors and z-values
+    ses = np.sqrt(np.maximum(np.diag(cov), eps))
+    tvals = w / ses
+    pvals = 2.0 * (1.0 - norm.cdf(np.abs(tvals)))
+    if return_cov: tvals, ses, pvals, cov
+    return tvals, ses, pvals, H
+
+def one_step_elimination_mask(w, H, alpha=0.05):
+    """
+    Single-step backward elimination returning a binary mask.
+    
+    Parameters:
+    ------------
+    w : np.ndarray, shape (p,)
+        Model coefficients
+    H : np.ndarray, shape (p,p)
+        Hessian of the model
+    alpha : float
+        Significance level (for chi-square threshold)
+    
+    Returns:
+    ---------
+    mask : np.ndarray, shape (p,)
+        Binary mask: 1 if feature kept, 0 if eliminated
+    """
+    p = len(w)
+    mask = np.ones(p, dtype=int)
+    threshold = chi2.ppf(1 - alpha, df=1)
+    delta = (w ** 2) / np.diag(H)
+    mask[delta < threshold] = 0
+    
+    return mask, delta

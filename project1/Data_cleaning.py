@@ -1,4 +1,15 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy.linalg import cho_factor, cho_solve
+from scipy.stats import norm
+
+def sigmoid(z):
+
+    # Clip z to avoid overflow in exp()
+    z = np.clip(z, -700, 700)  # exp(709) is close to float64 max (~1e308)
+
+    return 1.0 / (1.0 + np.exp(-z))
+
 
 def remove_nan_features(X, threshold=0.3):
     """
@@ -22,16 +33,29 @@ def remove_nan_rows(X, y=None):
     return X_clean
 
 
-def impute_missing_values(X, strategy="mean"):
+def impute_missing_values(X, strategy="normal"):
     """
-    Replace NaN values with column-wise mean or median.
-    strategy: "mean" or "median"
+    Replace NaN values with column-wise mean, median or normal sampling.
+    strategy: "mean", "median" or "normal"
     """
     X_imputed = X.copy()
+    n_features = X_imputed.shape[1]
+    values = []
     if strategy == "mean":
         values = np.nanmean(X_imputed, axis=0)
     elif strategy == "median":
         values = np.nanmedian(X_imputed, axis=0)
+    elif strategy == "normal":
+        means = np.nanmean(X_imputed, axis=0)
+        stds = np.nanstd(X_imputed, axis=0)
+
+        for j in range(n_features):
+            nan_mask = np.isnan(X_imputed[:, j])
+            n_missing = np.sum(nan_mask)
+            if n_missing > 0:
+                # Draw samples from N(mean_j, std_j)
+                samples = np.random.normal(loc=means[j], scale=stds[j], size=n_missing)
+                X_imputed[nan_mask, j] = samples
     else:
         raise ValueError("Invalid strategy: choose 'mean' or 'median'.")
 
@@ -51,40 +75,6 @@ def standardize_features(X):
     return X_std, means, stds
 
 
-def clean_data(X, y=None, feature_nan_threshold=0.3, impute_strategy="mean", drop_nan_rows=False, standardize=True):
-    """
-    Full cleaning pipeline:
-      1. Remove features with too many NaNs
-      2. Impute remaining NaNs
-      3. Optionally remove rows with NaNs
-      4. Standardize features
-    """
-    # Step 1: remove features with too many NaNs
-    X, feature_mask = remove_nan_features(X, threshold=feature_nan_threshold)
-
-    # Step 2: impute missing values
-    X, impute_values = impute_missing_values(X, strategy=impute_strategy)
-
-    # Step 3: optionally remove remaining rows with NaNs
-    row_mask = None
-    if drop_nan_rows:
-        X, y, row_mask = remove_nan_rows(X, y) if y is not None else remove_nan_rows(X)
-
-    # Step 4: standardize
-    if standardize:
-        X, means, stds = standardize_features(X)
-    else:
-        means, stds = None, None
-
-    return {
-        "X_clean": X,
-        "y_clean": y,
-        "feature_mask": feature_mask,
-        "row_mask": row_mask,
-        "impute_values": impute_values,
-        "means": means,
-        "stds": stds
-    }
 
 def select_random_features(X, n):
     """
@@ -154,4 +144,38 @@ def balance_data(X, y, method="undersample", random_state=None):
     y_bal = y[balanced_idx]
     
     return X_bal, y_bal
+
+
+def clean_data(X_train, X_val, y_train, y_val, random_state=None):
+        
+        """"
+        Args:
+            X_train (np.ndarray): shape (n_samples, n_features) with Nan values and unbalanced data
+            all the features will be used in this model (otherwise delete befor calling the function)
+            X_val (np.ndarray): shape (m_samples, n_features) with Nan values
+            y_train (np.ndarray): shape (n_samples,) with binary labels (0/1)
+            y_val (np.ndarray): shape (m_samples,) with binary labels (0/1)
+            random_state (int or None): For reproducible shuffling.
+        Returns:
+            X_train (np.ndarray): Cleaned and balanced training data.
+            X_val (np.ndarray): Cleaned validation data.
+            y_train (np.ndarray): Balanced training labels.
+            y_val (np.ndarray): Validation labels.
+        """
+        
+        if np.any(y_train == -1): y_train = (y_train + 1) / 2  #change labels if needed
+        if np.any(y_val == -1): y_val = (y_val + 1) / 2
+        X_train, X_val = impute_missing_values(X_train, strategy="normal"), impute_missing_values(X_val, strategy="normal")
+        X_train, X_means, X_stds = standardize_features(X_train)
+        X_val = (X_val - X_means) / X_stds # we normalize with the training parameters, not de validation ones
+        X_train, y_train = balance_data(X_train, y_train, method="undersample", random_state=random_state)
+
+        return X_train, X_val, y_train, y_val
+
+
+
+# Features selection
+
+
+
 

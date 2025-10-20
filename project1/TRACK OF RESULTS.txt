@@ -1,0 +1,8 @@
+TRACK OF RESULTS
+
+Ridg logistic with gamma = 0.5, lambda = 1, all features with more than 30% valid info
+Mean accuracy: 0.7657
+Mean predicted dispersion: 0.1795
+Mean true dispersion: 0.08720000000000001
+
+
