@@ -273,56 +273,93 @@ def ridge_regression(y, tx, lambda_):
 
 
 
-def logistic_tvalues(X, w, lambda_=0.0):
+
+# Tvalues
+def logistic_tvalues(X, y, w, lambda_=1.0, eps=1e-12, batch_size=20000, return_cov=False):
+ 
+    print("entered")
     """
-    Compute t-values for a penalized logistic regression model (NumPy only).
+    Compute t-values (Wald z-scores), standard errors, and p-values for
+    each coefficient of a (possibly penalized) logistic regression.
+
+    Model: logit(p) = X @ w[1:] + w[0]    (where w[0] is the intercept)
 
     Parameters
     ----------
-    X : ndarray of shape (n, d)
-        Feature matrix (without intercept column).
-    w : ndarray of shape (d + 1,) or (d + 1, 1)
-        Estimated weights including intercept.
+    X : (n, p) array
+        Feature matrix (without intercept column)
+    y : (n,) array
+        Binary target vector (0/1)
+    w : (p+1,) array
+        Model parameters [intercept, coef_1, ..., coef_p]
     lambda_ : float, optional
-        L2 regularization strength (default 0.0).
+        Ridge penalty strength (L2). Default 0 (unpenalized)
+    eps : float, optional
+        Small number for numerical stability
+    batch_size : int, optional
+        Number of samples processed per batch to limit memory use
+    return_cov : bool, optional
+        Whether to also return covariance matrix of parameters
 
     Returns
     -------
-    t_values : ndarray of shape (d + 1,)
-        t-values for each coefficient (including intercept).
+    tvals : array of shape (p+1,)
+        Wald z-scores for each parameter (including intercept)
+    ses : array of shape (p+1,)
+        Standard errors
+    pvals : array of shape (p+1,)
+        Two-sided p-values from standard normal approximation
+    cov (optional) : (p+1, p+1) array
+        Covariance matrix of w
     """
-    n, d = X.shape
+    X = np.asarray(X, dtype=float)
+    y = np.asarray(y, dtype=float).ravel()
+    w = np.asarray(w, dtype=float).ravel()
+    n, p = X.shape
+    assert w.shape[0] == p + 1, "w must include intercept (length p+1)."
 
-    # Ensure w is a column vector
-    w = w.reshape(-1, 1)
-
-    # Add intercept to X
-    X_aug = np.hstack([np.ones((n, 1)), X])  # (n, d+1)
+    print(2)
+    # Add column of ones for intercept
+    X_design = np.empty((n, p + 1), dtype=float)
+    X_design[:, 0] = 1.0
+    X_design[:, 1:] = X
 
     # Predicted probabilities
-    z = X_aug @ w
-    p = 1 / (1 + np.exp(-z))
+    print(X_design.shape, w.shape  )
+    eta = X_design @ w
+    p_hat = sigmoid(eta)
+    W = p_hat * (1.0 - p_hat)
+    W = np.clip(W, eps, None)
 
-    # Diagonal weights
-    W = (p * (1 - p)).flatten()
+    # Compute Hessian (observed information matrix)
+    H = np.zeros((p + 1, p + 1), dtype=float)
+    for i in range(0, n, batch_size):
+        Xi = X_design[i:i + batch_size]
+        wi = W[i:i + batch_size][:, None]
+        H += Xi.T @ (Xi * wi)
 
-    # Hessian with L2 penalty (except intercept)
-    penalty = lambda_ * np.eye(d + 1)
-    penalty[0, 0] = 0.0
-    H = X_aug.T @ (X_aug * W[:, None]) + penalty
+    # Add L2 penalty (except intercept)
+    if lambda_ > 0:
+        P = np.eye(p + 1) * lambda_
+        P[0, 0] = 0.0
+        H += P
 
-    # Covariance matrix
-    H_inv = np.linalg.inv(H)
+    # Numerical stabilizer
+    H += eps * np.eye(p + 1)
 
-    # Standard errors
-    se = np.sqrt(np.diag(H_inv)).reshape(-1, 1)
+    # Invert Hessian to get covariance
+    try:
+        c, lower = cho_factor(H, check_finite=False)
+        cov = cho_solve((c, lower), np.eye(p + 1), check_finite=False)
+    except Exception:
+        cov = np.linalg.pinv(H)
 
-    # t-values (same shape as w)
-    t_values = (w / se).flatten()
-
-    return t_values
-
-
+    # Standard errors and z-values
+    ses = np.sqrt(np.maximum(np.diag(cov), eps))
+    tvals = w / ses
+    pvals = 2.0 * (1.0 - norm.cdf(np.abs(tvals)))
+    if return_cov: tvals, ses, pvals, cov
+    return tvals, ses, pvals, H
 
 def one_step_elimination_mask(w, H, alpha=0.05):
     """
