@@ -15,6 +15,7 @@ def sigmoid(z):
 
     # Clip z to avoid overflow in exp()
     z = np.clip(z, -700, 700)  # exp(709) is close to float64 max (~1e308)
+    z = np.clip(z, -500, 500)  # exp(709) is close to float64 max (~1e308)
 
     return 1.0 / (1.0 + np.exp(-z))
 
@@ -132,6 +133,7 @@ def logistic_regression_penalized_gradient_descent(
         losses.append(loss)
 
         if iter % 1000 == 0:
+        if iter % 100 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
 
         # convergence check
@@ -258,6 +260,7 @@ def ridge_regression(y, tx, lambda_):
     w = np.linalg.solve(A, b)
     rmse = np.sqrt(2 * mse_loss(y, tx, w))
     return w, rmse
+    return rmse, w
 
 
 
