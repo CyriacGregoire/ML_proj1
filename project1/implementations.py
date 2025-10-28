@@ -14,7 +14,6 @@ def mse_loss(y, tx, w):
 def sigmoid(z):
 
     # Clip z to avoid overflow in exp()
-    z = np.clip(z, -700, 700)  # exp(709) is close to float64 max (~1e308)
     z = np.clip(z, -500, 500)  # exp(709) is close to float64 max (~1e308)
 
     return 1.0 / (1.0 + np.exp(-z))
@@ -132,7 +131,6 @@ def logistic_regression_penalized_gradient_descent(
         w = w - gamma * grad
         losses.append(loss)
 
-        if iter % 1000 == 0:
         if iter % 100 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
 
@@ -154,6 +152,18 @@ def predict_logistic(X, w, limit=0.5):
 
     tx = np.hstack([np.ones((X.shape[0], 1)), X])
     return (sigmoid(tx @ w) >= limit).astype(int)
+
+def predict_ridge(X, w, limit=0.5):
+    """
+    Computes the model prediction for a trained w parameters
+    X should be normalized, without NaNs and without intercept column
+    limit is the threshold to decide between class 0 and 1
+
+    returns: a vector of 0/1 predictions
+    """
+
+    tx = np.hstack([np.ones((X.shape[0], 1)), X])
+    return (tx @ w >= limit).astype(int)
 
 def kfold_logistic_ridge(
         X, y, k=5, gamma=0.5, lambda_=1e-3, threshold=1e-8, random_state=None):
@@ -259,7 +269,6 @@ def ridge_regression(y, tx, lambda_):
     b = tx.T @ y
     w = np.linalg.solve(A, b)
     rmse = np.sqrt(2 * mse_loss(y, tx, w))
-    return w, rmse
     return rmse, w
 
 
