@@ -420,7 +420,7 @@ def grid_search(
                     if f1 > best_f1:
                         best_f1 = f1
                         best_params = (pw, lam, th)
-                        print(f"New best F1 = {best_f1:.4f}")
+                        print(f"New best F1 = {best_f1:.4f} (threshold = {th:.2f})")
 
             except Exception as e:
                 print(f"Error for pos_weight={pw}, lambda_={lam}: {e}")
@@ -603,7 +603,7 @@ def cross_validation_grid_search(
     best_f1 = -1.0
     best_params = None
 
-    total = len(lambdas) * len(pos_weights) * len(thresholds)
+    total = len(lambdas) * len(pos_weights)
     run = 0
 
     for lambda_ in lambdas:
@@ -640,6 +640,7 @@ def cross_validation_grid_search(
                     y_pred, _ = predict_with_threshold(X_val, w, threshold=th)
                     f1 = f1_score(y_val, y_pred)
                     f1_scores.append((th, f1))
+                    print("For lambda", lambda_, "threshold", th, "pos_weight", pos_weight, "gets f1", f1)
 
             # Average F1 per threshold
             for th in thresholds:
