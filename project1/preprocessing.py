@@ -662,4 +662,3 @@ def cross_validation_grid_search(
           f"threshold={best_params['threshold']}")
 
     return best_params, best_f1, results
-
