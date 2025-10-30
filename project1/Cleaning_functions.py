@@ -354,3 +354,45 @@ def feature_target_correlation(X, y, threshold_elimination=0.01):
     # boolean mask based on threshold
     mask = np.abs(corr) >= threshold_elimination
     return mask
+
+def correlation_matrix_bool(X, threshold=0.9):
+    """
+    Computes a boolean correlation matrix indicating if the absolute
+    correlation between features exceeds a given threshold.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Data matrix (n_samples, n_features)
+    threshold : float
+        Correlation threshold (default = 0.9)
+
+    Returns
+    -------
+    corr_bool : np.ndarray
+        (n_features, n_features) boolean matrix where True means
+        |corr(i, j)| > threshold.
+    """
+    Xc = X - np.mean(X, axis=0)
+    stds = np.std(Xc, axis=0)
+    stds[stds == 0] = 1.0
+    Xn = Xc / stds
+    corr_mat = (Xn.T @ Xn) / (X.shape[0] - 1)
+
+    # Boolean matrix of high correlations
+    corr_bool = np.abs(corr_mat) > threshold
+    return corr_bool
+
+def tvalues_logreg_penalized(w, X, y, lam, pos_weight=1.0, neg_weight=1.0):
+    n, d = X.shape
+    w = w.reshape(-1,1)
+    y = y.reshape(-1,1)
+    Xb = np.hstack([np.ones((n,1)), X])
+    z = Xb @ w
+    p = 1 / (1 + np.exp(-z))
+    sample_w = np.where(y == 1, pos_weight, neg_weight).reshape(-1,1)
+    w_diag = (p * (1 - p) * sample_w).flatten()
+    H_diag = np.sum(Xb**2 * w_diag[:, None], axis=0) + lam
+    se = 1 / np.sqrt(H_diag)
+    t_vals = (w.flatten() / se)
+    return ((t_vals[1:] > 2) | (t_vals[1:] < -2))
