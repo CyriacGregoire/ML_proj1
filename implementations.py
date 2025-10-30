@@ -197,12 +197,7 @@ def reg_logistic_regression(
         if iter % 100 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
 
-        # convergence check
-        if len(losses) > 1 and abs(losses[-1] - losses[-2]) < threshold:
-            print(f"Converged at iteration {iter}")
-            break
-
-    return w, loss
+    return w, np.float64(loss) 
 
 ###########################################################################################################################################################
             
