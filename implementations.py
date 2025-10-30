@@ -146,23 +146,21 @@ def logistic_regression_penalized_gradient_descent(
     return loss, w
 ###########################################################################################################################################################
 
-def logistic_regression(y, x):
+def logistic_regression(y, tx, inititial_w, max_iters, gamma):
     """This is a docstring"""
 
     # init parameters
 
-    max_iter = 10000
     threshold = 1e-8
-    gamma = 0.5
     losses = []
-    loss = 0
+    loss = logistic_loss(y,tx,inititial_w)
 
     # build tx
     tx = np.c_[np.ones((y.shape[0], 1)), x]
-    w = np.zeros((tx.shape[1], 1))
+    w = inititial_w
 
     # start the logistic regression
-    for iter in range(max_iter):
+    for iter in range(max_iters):
         # get loss and update w.
         loss, w = learning_by_gradient_descent_logistic(y, tx, w, gamma)
         # log info
@@ -180,21 +178,21 @@ def logistic_regression(y, x):
 
 
 def reg_logistic_regression(
-    y, x, max_iter=10000, gamma=0.5, lambda_=1e-3, threshold=1e-8
-):
+    y, tx, lambda_=1e-3, initial_w,  max_iters=10000, gamma=0.5):
     """This is a docstring"""
 
-    losses = []
+    #losses = []
+    loss = logistic_loss(y,tx, initial_w)
 
     # build tx
     tx = np.c_[np.ones((y.shape[0], 1)), x]
     w = np.zeros(tx.shape[1])
 
-    for iter in range(max_iter):
+    for iter in range(max_iters):
         loss = logistic_loss(y, tx, w) + lambda_ * w.T@w
         grad = compute_gradient_logistic(y, tx, w) + 2* lambda_ * w  
         w = w - gamma * grad
-        losses.append(loss)
+        #losses.append(loss)
 
         if iter % 100 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
@@ -340,7 +338,7 @@ def ridge_regression(y, tx, lambda_):
     b = tx.T @ y
     w = np.linalg.solve(A, b)
     rmse = np.sqrt(2 * mse_loss(y, tx, w))
-    return rmse, w
+    return w, rmse
 
 
 
