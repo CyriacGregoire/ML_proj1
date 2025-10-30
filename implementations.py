@@ -151,12 +151,11 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
 
     # init parameters
 
-    threshold = 1e-8
     losses = []
     loss = logistic_loss(y,tx,initial_w)
 
     # build tx
-    tx = np.c_[np.ones((y.shape[0], 1)), tx]
+    #tx = np.c_[np.ones((y.shape[0], 1)), tx]
     w = initial_w
 
     # start the logistic regression
@@ -166,10 +165,6 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
         # log info
         if iter % 100 == 0:
             print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
-        # converge criterion
-        losses.append(loss)
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
-            break
     
     return w, loss
           
@@ -185,8 +180,8 @@ def reg_logistic_regression(
     loss = logistic_loss(y,tx, initial_w)
 
     # build tx
-    tx = np.c_[np.ones((y.shape[0], 1)), tx]
-    w = np.zeros(tx.shape[1])
+    #tx = np.c_[np.ones((y.shape[0], 1)), tx]
+    w = initial_w
 
     for iter in range(max_iters):
         loss = logistic_loss(y, tx, w) + lambda_ * w.T@w
@@ -197,7 +192,7 @@ def reg_logistic_regression(
         if iter % 100 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
 
-    return w, np.float64(loss) 
+    return w, loss
 
 ###########################################################################################################################################################
             
