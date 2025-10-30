@@ -662,3 +662,34 @@ def cross_validation_grid_search(
           f"threshold={best_params['threshold']}")
 
     return best_params, best_f1, results
+
+def impute_categorical_missing_code(X, cat_mask, missing_code=-1.0):
+    """
+    Replace NaNs in *categorical* columns with a special code (default -1),
+    leaving numeric columns unchanged.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, n_features)
+        Full feature matrix (numeric + categorical).
+    cat_mask : np.ndarray of bool, shape (n_features,)
+        True for categorical columns, False for numeric ones.
+    missing_code : float, default=-1.0
+        Code used to represent 'Missing' category.
+
+    Returns
+    -------
+    X_imputed : np.ndarray, same shape as X
+        Copy of X where NaNs in categorical columns are replaced by `missing_code`.
+    """
+    Xf = np.array(X, dtype=np.float64, copy=True)
+    cat_idx = np.where(cat_mask)[0]
+
+    for j in cat_idx:
+        col = Xf[:, j]
+        nan_mask = np.isnan(col)
+        if np.any(nan_mask):
+            col[nan_mask] = missing_code
+            Xf[:, j] = col
+
+    return Xf
