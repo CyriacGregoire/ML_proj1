@@ -146,18 +146,18 @@ def logistic_regression_penalized_gradient_descent(
     return loss, w
 ###########################################################################################################################################################
 
-def logistic_regression(y, tx, inititial_w, max_iters, gamma):
+def logistic_regression(y, tx, initial_w, max_iters, gamma):
     """This is a docstring"""
 
     # init parameters
 
     threshold = 1e-8
     losses = []
-    loss = logistic_loss(y,tx,inititial_w)
+    loss = logistic_loss(y,tx,initial_w)
 
     # build tx
     tx = np.c_[np.ones((y.shape[0], 1)), tx]
-    w = inititial_w
+    w = initial_w
 
     # start the logistic regression
     for iter in range(max_iters):
@@ -171,7 +171,7 @@ def logistic_regression(y, tx, inititial_w, max_iters, gamma):
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
     
-    w, loss
+    return w, loss
           
 
 # Logistic Regression with Penalization
@@ -181,7 +181,7 @@ def reg_logistic_regression(
     y, tx, lambda_, initial_w,  max_iters, gamma):
     """This is a docstring"""
 
-    #losses = []
+    losses = []
     loss = logistic_loss(y,tx, initial_w)
 
     # build tx
@@ -192,7 +192,7 @@ def reg_logistic_regression(
         loss = logistic_loss(y, tx, w) + lambda_ * w.T@w
         grad = compute_gradient_logistic(y, tx, w) + 2* lambda_ * w  
         w = w - gamma * grad
-        #losses.append(loss)
+        losses.append(loss)
 
         if iter % 100 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
