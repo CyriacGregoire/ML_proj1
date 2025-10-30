@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Data_cleaning import*
 from scipy.linalg import cho_factor, cho_solve
 from scipy.stats import norm
 from scipy.stats import chi2
@@ -47,6 +46,7 @@ def compute_gradient_logistic(y, tx, w):
 #Gradient Descent
 
 def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
+    """This is a docstring"""
     ws = [initial_w]
     losses = []
     w = initial_w
@@ -63,6 +63,7 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
     return ws[-1], losses[-1]
 
 def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
+    """This is a docstring"""
     ws = [initial_w]
     losses = []
     w = initial_w
@@ -143,7 +144,10 @@ def logistic_regression_penalized_gradient_descent(
 ###########################################################################################################################################################
 
 def logistic_regression(y, x):
+    """This is a docstring"""
+
     # init parameters
+
     max_iter = 10000
     threshold = 1e-8
     gamma = 0.5
@@ -174,6 +178,8 @@ def logistic_regression(y, x):
 def reg_logistic_regression(
     y, x, max_iter=10000, gamma=0.5, lambda_=1e-3, threshold=1e-8
 ):
+    """This is a docstring"""
+
     losses = []
 
     # build tx
@@ -311,6 +317,8 @@ def kfold_logistic_ridge(
 #Explicit Solutions
         
 def least_squares(y, tx):
+    """This is a docstring"""
+
     A = tx.T @ tx
     b = tx.T @ y
     w = np.linalg.solve(A, b)
@@ -318,6 +326,8 @@ def least_squares(y, tx):
     return w, mse
 
 def ridge_regression(y, tx, lambda_):
+    """This is a docstring"""
+
     D = tx.shape[1]
     N = y.shape[0]
     I = np.eye(D)
