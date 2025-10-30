@@ -67,8 +67,8 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
 
 def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
     """This is a docstring"""
-    ws = [initial_w]
-    losses = []
+    #ws = [initial_w]
+    loss = mse_loss(y, tx, initial_w)
     w = initial_w
     N = y.shape[0]
  
@@ -76,15 +76,15 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
         i = np.random.randint(0, N)
         x_i, y_i = tx[i], y[i]
         
-        gradient = compute_gradient_stochastic(y_i, x_i, w) 
-        loss = mse_loss(y, tx, w)
+        gradient = compute_gradient_stochastic(y_i, x_i , w) 
+        #loss = mse_loss(y, tx, w)
         
         w = w - gamma * gradient
+        loss = mse_loss(y, tx, w)
+        # ws.append(w)
+        # losses.append(loss)
         
-        ws.append(w)
-        losses.append(loss)
-        
-    return ws[-1], losses[-1]
+    return w, loss
 
 def learning_by_gradient_descent_logistic(y, tx, w, gamma):
     grad = compute_gradient_logistic(y, tx, w)
