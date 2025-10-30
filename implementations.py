@@ -19,9 +19,9 @@ def sigmoid(z):
 
 def logistic_loss(y, tx, w):
     """Stable logistic loss computation."""
-    eps = 1e-15
+    eps = 1e-7
     pred = sigmoid(tx @ w)
-    pred = np.clip(pred, eps, 1 - eps)
+    #pred = np.clip(pred, eps, 1 - eps)
     loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
     
     return float(loss)
@@ -38,8 +38,8 @@ def compute_gradient_stochastic(y_i, x_i, w):
     return -error * x_i 
 
 def compute_gradient_logistic(y, tx, w):
-    pred = sigmoid(tx @ w)               
-    grad = tx.T @ (pred - y) / y.shape[0]
+    pred = sigmoid(tx @ w) 
+    grad = ( tx.T @ (pred - y) ) / y.shape[0]
     return grad
     
 
@@ -86,12 +86,12 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
         
     return w, loss
 
-def learning_by_gradient_descent_logistic(y, tx, w, gamma):
-    grad = compute_gradient_logistic(y, tx, w)
-    loss = logistic_loss(y, tx, w)
-    w = w - gamma * grad
+# def learning_by_gradient_descent_logistic(y, tx, w, gamma):
+#     grad = compute_gradient_logistic(y, tx, w)
+#     loss = logistic_loss(y, tx, w)
+#     w = w - gamma * grad
 
-    return loss, w
+#     return loss, w
 
 def logistic_regression_gradient_descent(y, x):
     # init parameters
@@ -161,10 +161,16 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     # start the logistic regression
     for iter in range(max_iters):
         # get loss and update w.
-        loss, w = learning_by_gradient_descent_logistic(y, tx, w, gamma)
+        grad = compute_gradient_logistic(y, tx, w)
+        loss = logistic_loss(y, tx, w)
+        w = w - gamma * grad
+
+    #return loss, w
         # log info
-        if iter % 100 == 0:
-            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+    if iter % 100 == 0:
+        print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+
+    loss = np.array([loss])[0]
     
     return w, loss
           
@@ -184,13 +190,15 @@ def reg_logistic_regression(
     w = initial_w
 
     for iter in range(max_iters):
-        loss = logistic_loss(y, tx, w) + lambda_ * w.T@w
+        loss = logistic_loss(y, tx, w)
         grad = compute_gradient_logistic(y, tx, w) + 2* lambda_ * w  
         w = w - gamma * grad
         losses.append(loss)
 
         if iter % 100 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
+
+    loss = np.array([loss])[0]
 
     return w, loss
 
