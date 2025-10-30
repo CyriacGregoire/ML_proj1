@@ -1,10 +1,4 @@
 import numpy as np
-<<<<<<< HEAD
-from helpers import model_accuracy, f1_score
-
-# Logistic Regression Functions
-
-=======
 
 # Logistic Regression Functions
 
@@ -24,7 +18,6 @@ def f1_score(y_true, y_pred):
     recall = tp / (tp + fn + 1e-15)
     f1 = 2 * precision * recall / (precision + recall + 1e-15)
     return f1
->>>>>>> f998db3cbf091b502b8d11a0ca999c3122c9b050
 
 def sigmoid(z):
     
@@ -49,12 +42,8 @@ def predict_logistic(x, w, threshold=0.5):
     preds = (probs >= threshold).astype(int)
     return preds
 
-<<<<<<< HEAD
-def evaluate_logistic_model(y_true, X, w, threshold=0.5):
-=======
 
 def evaluate_logistic_model(y_true, X, w, threshold=0.5, lambda_=1e-3):
->>>>>>> f998db3cbf091b502b8d11a0ca999c3122c9b050
     """
     Args:
         y_true: True labels, shape (N,)
@@ -64,15 +53,6 @@ def evaluate_logistic_model(y_true, X, w, threshold=0.5, lambda_=1e-3):
 
     Evaluate trained logistic regression on a dataset.
     Returns accuracy and F1 score.
-<<<<<<< HEAD
-    """
-    preds = predict_logistic(X, w, threshold=threshold)
-    acc = model_accuracy(y_true, preds)
-    f1 = f1_score(y_true, preds)
-    print(f" Accuracy: {acc*100:.2f}%")
-    print(f" F1 Score: {f1:.4f}")
-    return acc, f1
-=======
 
     
     """
@@ -84,30 +64,15 @@ def evaluate_logistic_model(y_true, X, w, threshold=0.5, lambda_=1e-3):
     print(f" Accuracy: {acc*100:.2f}%")
     print(f" F1 Score: {f1:.4f}")
     return f1, acc, loss
->>>>>>> f998db3cbf091b502b8d11a0ca999c3122c9b050
 
 
 # Logistic Regression with Gradient Descent
 
-<<<<<<< HEAD
-def logistic_loss(y, tx, w):
-=======
 def logistic_pen_loss(y, tx, w, lambda_):
->>>>>>> f998db3cbf091b502b8d11a0ca999c3122c9b050
     """Stable logistic loss computation."""
     eps = 1e-15
     pred = sigmoid(tx @ w)
     pred = np.clip(pred, eps, 1 - eps)
-<<<<<<< HEAD
-    loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
-    
-    return float(loss)
-
-def compute_gradient_logistic(y, tx, w):
-    pred = sigmoid(tx @ w)               
-    grad = tx.T @ (pred - y) / y.shape[0]
-    return grad
-=======
     loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred)) + lambda_ * w.T@w
     
     return float(loss)
@@ -116,7 +81,6 @@ def compute_gradient_logistic_pen(y, tx, w, lambda_):
     pred = sigmoid(tx @ w)               
     grad = tx.T @ (pred - y) / y.shape[0]
     return grad + 2* lambda_ * w 
->>>>>>> f998db3cbf091b502b8d11a0ca999c3122c9b050
     
 
 def logistic_regression_penalized_gradient_descent(
@@ -127,13 +91,8 @@ def logistic_regression_penalized_gradient_descent(
     w = np.zeros(tx.shape[1])
 
     for iter in range(max_iter):
-<<<<<<< HEAD
-        loss = logistic_loss(y, tx, w) + lambda_ * w.T@w
-        grad = compute_gradient_logistic(y, tx, w) + 2* lambda_ * w  
-=======
         loss = logistic_pen_loss(y, tx, w, lambda_) 
         grad = compute_gradient_logistic_pen(y, tx, w, lambda_)  
->>>>>>> f998db3cbf091b502b8d11a0ca999c3122c9b050
         w = w - gamma * grad
         losses.append(loss)
 
@@ -199,16 +158,10 @@ def kfold_logistic_ridge(
         # training the model and computing error
 
         loss, w = logistic_regression_penalized_gradient_descent(y_train, X_train, lambda_=lambda_, gamma=gamma, threshold=threshold)
-<<<<<<< HEAD
-        acc, f1 = evaluate_logistic_model(y_val, X_val, w, threshold=alpha)
-        accuracies.append(acc)
-        f1_scores.append(f1)       
-=======
         f1, acc, val_loss = evaluate_logistic_model(y_val, X_val, w, threshold=alpha, lambda_=lambda_)
         accuracies.append(acc)
         f1_scores.append(f1)
         print("     from now, f1 score:", f1, "accuracy:", acc)       
->>>>>>> f998db3cbf091b502b8d11a0ca999c3122c9b050
         current += fold_size
         current_batch += 1 
         
@@ -216,9 +169,6 @@ def kfold_logistic_ridge(
     mean_f1 = np.mean(f1_scores)    
     return mean_accuracy, mean_f1
 
-<<<<<<< HEAD
-    
-=======
 
 # Weighted logistic model
 
@@ -408,5 +358,4 @@ def over_under_fitting(
     return train_losses, val_losses, f1_scores, N
 
 
->>>>>>> f998db3cbf091b502b8d11a0ca999c3122c9b050
 
