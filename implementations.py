@@ -47,8 +47,8 @@ def compute_gradient_logistic(y, tx, w):
 
 def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
     """This is a docstring"""
-    ws = [initial_w]
-    losses = []
+    #ws = [initial_w]
+    #losses = []
     w = initial_w
     
     for n_iter in range(max_iters):
@@ -57,10 +57,10 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
         
         w = w - gamma * gradient
         
-        ws.append(w)
-        losses.append(loss)
+        #ws.append(w)
+        #losses.append(loss)
         
-    return ws[-1], losses[-1]
+    return w, loss
 
 def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
     """This is a docstring"""
@@ -152,6 +152,7 @@ def logistic_regression(y, x):
     threshold = 1e-8
     gamma = 0.5
     losses = []
+    loss = 0
 
     # build tx
     tx = np.c_[np.ones((y.shape[0], 1)), x]
@@ -169,7 +170,7 @@ def logistic_regression(y, x):
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
     
-    w, losses[-1]
+    w, loss
           
 
 # Logistic Regression with Penalization
