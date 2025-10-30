@@ -8,7 +8,7 @@ from scipy.stats import chi2
 
 def mse_loss(y, tx, w):
     error = y - tx @ w
-    return np.mean(error ** 2) / 2
+    return np.mean(error ** 2) 
 
 def sigmoid(z):
 
@@ -31,7 +31,7 @@ def logistic_loss(y, tx, w):
 def compute_gradient_mse(y, tx, w):
     N = y.shape[0]
     error = y - tx @ w
-    return -(tx.T @ error) / N
+    return -2*(tx.T @ error) / N
 
 def compute_gradient_stochastic(y_i, x_i, w):
     error = y_i - x_i @ w        
@@ -50,6 +50,7 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
     #ws = [initial_w]
     #losses = []
     w = initial_w
+    loss = 0
     
     for n_iter in range(max_iters):
         gradient = compute_gradient_mse(y, tx, w)    
