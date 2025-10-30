@@ -96,6 +96,41 @@ def impute_categorical(X, cat_mask, modes=None):
 
 
 def stratified_three_way_split(X, y, val_ratio=0.15, test_ratio=0.15, seed=0):
+    """
+    Returns a dataset split into train, validation , and test set given the ratios,
+    keeping the same ratio of class balance on each set. It uses a fixed seed for 
+    reproductibility
+    """
+
+    Parameters
+    ----------
+    X : TYPE
+        DESCRIPTION.
+    y : TYPE
+        DESCRIPTION.
+    val_ratio : TYPE, optional
+        DESCRIPTION. The default is 0.15.
+    test_ratio : TYPE, optional
+        DESCRIPTION. The default is 0.15.
+    seed : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+    TYPE
+        DESCRIPTION.
+    TYPE
+        DESCRIPTION.
+    TYPE
+        DESCRIPTION.
+    TYPE
+        DESCRIPTION.
+    TYPE
+        DESCRIPTION.
+
+    """
     np.random.seed(seed)
     idx_pos = np.where(y == 1)[0]
     idx_neg = np.where(y == 0)[0]
@@ -490,178 +525,6 @@ def confusion_matrix_numpy(y_true, y_pred, plot=True):
 
     return cm
 
-def build_poly_multi(X, degree, num_mask=None):
-    """
-    Create polynomial features up to the given degree for numerical columns,
-    excluding degree 0 (no bias column).
-
-    Parameters
-    ----------
-    X : ndarray, shape (n_samples, n_features)
-        Input data matrix.
-    degree : int
-        Maximum polynomial degree. Powers from 1 up to `degree` are generated.
-    num_mask : ndarray of bool, optional
-        Mask for numerical columns. If None, all are treated as numerical.
-
-    Returns
-    -------
-    X_poly : ndarray
-        Feature matrix including:
-            - polynomial powers of numerical features (no bias term)
-            - unchanged categorical features
-    """
-    n_samples, n_features = X.shape
-    if num_mask is None:
-        num_mask = np.ones(n_features, dtype=bool)
-
-    poly = []
-    for j in range(n_features):
-        if num_mask[j]:
-            for p in range(1, degree + 1):
-                poly.append((X[:, j] ** p).reshape(-1, 1))
-        else:
-            poly.append(X[:, j].reshape(-1, 1))
-    return np.hstack(poly)
-
-
-def stratified_k_fold(X, y, k=5, seed=42):
-    np.random.seed(seed)
-    folds = []
-    # unique classes
-    classes = np.unique(y)
-
-    # indices per class
-    class_indices = [np.where(y == c)[0] for c in classes]
-    for idx in class_indices:
-        np.random.shuffle(idx)
-
-    # split each class indices into k roughly equal parts
-    class_folds = [np.array_split(idx, k) for idx in class_indices]
-
-    # combine class folds to form stratified folds
-    for i in range(k):
-        val_idx = np.concatenate([folds[i] for folds in class_folds])
-        train_idx = np.setdiff1d(np.arange(len(y)), val_idx)
-        folds.append((train_idx, val_idx))
-    
-    return folds
-
-def cross_validation_grid_search(
-    y, X,
-    k=5,
-    lambdas=[1e-5, 1e-3, 1e-2],
-    pos_weights=[1.0, 3.0, 5.0],
-    thresholds=[0.3, 0.5, 0.7],
-    gamma=0.05,
-    max_iter=5000,
-    tol=1e-8,
-    seed=42,
-    verbose=False,
-    cleaning_function=None
-):
-    """
-    Perform k-fold cross-validation over a grid of hyperparameters
-    (lambda_, pos_weight, threshold) using weighted logistic regression.
-
-    Parameters
-    ----------
-    y : np.ndarray
-        Target vector (0/1).
-    X : np.ndarray
-        Feature matrix (n_samples, n_features).
-    k : int
-        Number of folds.
-    lambdas, pos_weights, thresholds : list
-        Hyperparameter values to test.
-    gamma : float
-        Learning rate (fixed).
-    max_iter : int
-        Maximum number of iterations for logistic regression.
-    tol : float
-        Tolerance for convergence.
-    seed : int
-        Random seed for reproducibility.
-    verbose : bool
-        If True, prints training details.
-    cleaning_function : callable or None
-        Function to clean data inside each fold:
-        (X_train, y_train, X_val, y_val) → (X_train_clean, y_train, X_val_clean, y_val)
-
-    Returns
-    -------
-    best_params : dict
-        Dictionary with best hyperparameters.
-    best_f1 : float
-        Best mean F1-score found.
-    results : list of tuples
-        (lambda_, pos_weight, threshold, mean_f1)
-    """
-    np.random.seed(seed)
-    folds = stratified_k_fold(X, y, k, seed)
-    results = []
-    best_f1 = -1.0
-    best_params = None
-
-    total = len(lambdas) * len(pos_weights)
-    run = 0
-
-    for lambda_ in lambdas:
-        for pos_weight in pos_weights:
-            neg_weight = 1.0  # fixed
-            run += 1
-            print(f"\n=== Run {run}/{total} | λ={lambda_} | pos_w={pos_weight} ===")
-
-            f1_scores = []
-
-            for i, (train_idx, val_idx) in enumerate(folds):
-                X_train, y_train = X[train_idx], y[train_idx]
-                X_val, y_val = X[val_idx], y[val_idx]
-
-                # --- Apply cleaning function per fold ---
-                if cleaning_function is not None:
-                    X_train, y_train, X_val, y_val = cleaning_function(X_train, y_train, X_val, y_val)
-                # ---------------------------------------
-
-                # Train model
-                loss, w = logistic_regression_weighted_gd(
-                    y_train, X_train,
-                    lambda_=lambda_,
-                    gamma=gamma,
-                    pos_weight=pos_weight,
-                    neg_weight=neg_weight,
-                    max_iter=max_iter,
-                    tol=tol,
-                    verbose=verbose
-                )
-
-                # Evaluate all thresholds
-                for th in thresholds:
-                    y_pred, _ = predict_with_threshold(X_val, w, threshold=th)
-                    f1 = f1_score(y_val, y_pred)
-                    f1_scores.append((th, f1))
-                    print("For lambda", lambda_, "threshold", th, "pos_weight", pos_weight, "gets f1", f1)
-
-            # Average F1 per threshold
-            for th in thresholds:
-                th_f1s = [f1 for t, f1 in f1_scores if t == th]
-                mean_f1 = np.mean(th_f1s)
-                results.append((lambda_, pos_weight, th, mean_f1))
-
-                if mean_f1 > best_f1:
-                    best_f1 = mean_f1
-                    best_params = dict(lambda_=lambda_, pos_weight=pos_weight, threshold=th)
-                    print(f"New best F1={best_f1:.4f} (λ={lambda_}, pos_w={pos_weight}, th={th})")
-
-    # Sort results by descending mean F1
-    results.sort(key=lambda x: x[3], reverse=True)
-
-    print("\n=== Grid Search Summary ===")
-    print(f"Best mean F1={best_f1:.4f}")
-    print(f"Best params: λ={best_params['lambda_']}, pos_w={best_params['pos_weight']}, "
-          f"threshold={best_params['threshold']}")
-
-    return best_params, best_f1, results
 
 def impute_categorical_missing_code(X, cat_mask, missing_code=-1.0):
     """
