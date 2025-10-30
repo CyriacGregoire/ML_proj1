@@ -178,7 +178,7 @@ def logistic_regression(y, tx, inititial_w, max_iters, gamma):
 
 
 def reg_logistic_regression(
-    y, tx, lambda_=1e-3, initial_w,  max_iters=10000, gamma=0.5):
+    y, tx, lambda_, initial_w,  max_iters, gamma):
     """This is a docstring"""
 
     #losses = []
