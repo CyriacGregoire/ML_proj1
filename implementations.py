@@ -165,10 +165,10 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
         loss = logistic_loss(y, tx, w)
         w = w - gamma * grad
 
-    #return loss, w
+        #return loss, w
         # log info
-    if iter % 100 == 0:
-        print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+        if iter % 100 == 0:
+            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
 
     loss = np.array([loss])[0]
     
