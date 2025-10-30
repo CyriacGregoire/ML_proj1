@@ -60,7 +60,7 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
         ws.append(w)
         losses.append(loss)
         
-    return ws[-1], loss[-1]
+    return ws[-1], losses[-1]
 
 def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
     ws = [initial_w]
@@ -80,7 +80,7 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
         ws.append(w)
         losses.append(loss)
         
-    return ws[-1], loss[-1]
+    return ws[-1], losses[-1]
 
 def learning_by_gradient_descent_logistic(y, tx, w, gamma):
     grad = compute_gradient_logistic(y, tx, w)
