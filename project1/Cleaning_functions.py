@@ -355,33 +355,27 @@ def feature_target_correlation(X, y, threshold_elimination=0.01):
     mask = np.abs(corr) >= threshold_elimination
     return mask
 
-def correlation_matrix_bool(X, threshold=0.9):
+def correlation_matrix(X):
     """
-    Computes a boolean correlation matrix indicating if the absolute
-    correlation between features exceeds a given threshold.
+    Computes the Pearson correlation matrix between all features.
 
     Parameters
     ----------
     X : np.ndarray
         Data matrix (n_samples, n_features)
-    threshold : float
-        Correlation threshold (default = 0.9)
 
     Returns
     -------
-    corr_bool : np.ndarray
-        (n_features, n_features) boolean matrix where True means
-        |corr(i, j)| > threshold.
+    corr_mat : np.ndarray
+        (n_features, n_features) correlation matrix.
     """
     Xc = X - np.mean(X, axis=0)
     stds = np.std(Xc, axis=0)
     stds[stds == 0] = 1.0
     Xn = Xc / stds
     corr_mat = (Xn.T @ Xn) / (X.shape[0] - 1)
+    return corr_mat
 
-    # Boolean matrix of high correlations
-    corr_bool = np.abs(corr_mat) > threshold
-    return corr_bool
 
 def tvalues_logreg_penalized(w, X, y, lam, pos_weight=1.0, neg_weight=1.0):
     n, d = X.shape
