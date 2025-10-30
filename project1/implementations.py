@@ -140,6 +140,63 @@ def logistic_regression_penalized_gradient_descent(
             break
 
     return loss, w
+###########################################################################################################################################################
+
+def logistic_regression(y, x):
+    # init parameters
+    max_iter = 10000
+    threshold = 1e-8
+    gamma = 0.5
+    losses = []
+
+    # build tx
+    tx = np.c_[np.ones((y.shape[0], 1)), x]
+    w = np.zeros((tx.shape[1], 1))
+
+    # start the logistic regression
+    for iter in range(max_iter):
+        # get loss and update w.
+        loss, w = learning_by_gradient_descent_logistic(y, tx, w, gamma)
+        # log info
+        if iter % 100 == 0:
+            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+        # converge criterion
+        losses.append(loss)
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+    
+    w, losses[-1]
+          
+
+# Logistic Regression with Penalization
+
+
+def reg_logistic_regression(
+    y, x, max_iter=10000, gamma=0.5, lambda_=1e-3, threshold=1e-8
+):
+    losses = []
+
+    # build tx
+    tx = np.c_[np.ones((y.shape[0], 1)), x]
+    w = np.zeros(tx.shape[1])
+
+    for iter in range(max_iter):
+        loss = logistic_loss(y, tx, w) + lambda_ * w.T@w
+        grad = compute_gradient_logistic(y, tx, w) + 2* lambda_ * w  
+        w = w - gamma * grad
+        losses.append(loss)
+
+        if iter % 100 == 0:
+            print(f"Iteration {iter:5d}, loss = {loss:.6f}")
+
+        # convergence check
+        if len(losses) > 1 and abs(losses[-1] - losses[-2]) < threshold:
+            print(f"Converged at iteration {iter}")
+            break
+
+    return w, loss
+
+###########################################################################################################################################################
             
 def predict_logistic(X, w, limit=0.5):
     """
