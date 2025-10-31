@@ -1,7 +1,7 @@
 # ML_proj1
 ML project 1; Team  Jan Fornieles Zaguirre, Jan Gambús Vinyeta, Cyriac Grégoire
 
-This repository contains a Project realised by its three collaborators, in the context of the EPFL course CS-433 Machine Learning. We use the data found in \project1\data\dataset.zip composed of .csv files that contain the results of a 2015 survey by BRFSS. To use any Notebook in this repository please dowload locally and unzip this folder.
+This repository contains a Project realised by its three collaborators, in the context of the EPFL course CS-433 Machine Learning. We use the data found in \project1\data\dataset.zip composed of .csv files that contain the results of a 2015 survey by BRFSS. To use any Notebook in this repository please dowload locally and extract all the files in this folder.
 
 This repository contains the main classifying models that determine, using answeres from the survey whether a respondant will suffer from a heart attack. The best performing model is found in run.ipynb. The Fox_I.ipynb and Fox_II.ipynb are an almost equivalent model with different approaches. It shows the evolution of this project more and contains an analysis of the model.
 
