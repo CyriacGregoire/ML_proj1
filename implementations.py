@@ -251,7 +251,7 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
         loss = logistic_loss(y, tx, w)
         w = w - gamma * grad
 
-        if iter % 100 == 0:
+        if iter % 1000 == 0:
             print(f"Current iteration={iter}, loss={loss}")
 
     loss = np.array([loss])[0]
@@ -297,7 +297,7 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
         w = w - gamma * grad
         losses.append(loss)
 
-        if iter % 100 == 0:
+        if iter % 1000 == 0:
             print(f"Iteration {iter:5d}, loss = {loss:.6f}")
 
     loss = np.array([loss])[0]
