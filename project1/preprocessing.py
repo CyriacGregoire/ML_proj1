@@ -100,7 +100,6 @@ def stratified_three_way_split(X, y, val_ratio=0.15, test_ratio=0.15, seed=0):
     Returns a dataset split into train, validation , and test set given the ratios,
     keeping the same ratio of class balance on each set. It uses a fixed seed for 
     reproductibility
-    """
 
     Parameters
     ----------
