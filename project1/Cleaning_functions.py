@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.linalg import cho_factor, cho_solve
-from scipy.stats import norm
 
 def sigmoid(z):
 
